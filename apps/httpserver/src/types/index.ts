@@ -18,3 +18,7 @@ export const AddWebsiteSchema = z.object({
     websiteUrl: z.string(),
     iconUrl: z.string()
 })
+
+export const CreateReviewSchema = z.object({
+    content : z.string()
+})
