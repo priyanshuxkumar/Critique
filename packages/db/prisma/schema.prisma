@@ -14,25 +14,31 @@ datasource db {
 }
 
 model User {
-  id       Int    @id @default(autoincrement())
+  id       Int     @id @default(autoincrement())
   name     String
   avatar   String?
-  email    String @unique
+  email    String  @unique
   password String
 
   reviews Review[]
 }
 
 model Website {
-  id      String @id @default(uuid())
-  name    String
-  websiteUrl  String
-  iconUrl String
+  id         String @id @default(uuid())
+  name       String
+  websiteUrl String
+  iconUrl    String
+
+  reviews    Review[]
 }
 
 model Review {
   id      String @id @default(uuid())
   content String
-  userId  Int    @unique
+  userId  Int    
   user    User   @relation(fields: [userId], references: [id])
+
+  websiteId String
+  website   Website @relation(fields: [websiteId], references: [id])
+  @@unique([userId, websiteId])
 }
