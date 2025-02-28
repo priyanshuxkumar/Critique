@@ -12,3 +12,9 @@ export const SigninSchema = z.object({
     email: EmailSchema,
     password: z.string().min(8),
 })
+
+export const AddWebsiteSchema = z.object({
+    name: z.string(),
+    websiteUrl: z.string(),
+    iconUrl: z.string()
+})

@@ -1,9 +1,9 @@
 import { Request, Response, Router } from 'express';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
 import { SigninSchema, SignupSchema } from  '../types';
 import { prisma } from 'db';
 import { JWT_SECRET } from '../config';
-import { authMiddleware } from '../middleware/auth.middleware';
 
 const router = Router()
 
@@ -26,9 +26,12 @@ router.post('/signup', async (req: Request , res: Response) => {
             return;
         }
 
+        const hashPassword = await bcrypt.hash(parsedData.data.password, 10);
+
         await prisma.user.create({
             data: {
-                ...parsedData.data
+                ...parsedData.data,
+                password: hashPassword
             }
         })
 
