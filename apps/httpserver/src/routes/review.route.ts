@@ -33,18 +33,39 @@ router.post('/create/:id', authMiddleware, async (req: Request , res: Response) 
     }
 })
 
-
 router.get('/:id', authMiddleware, async (req: Request , res: Response) => {
     const websiteId = req.params.id;
     try {
         const reviews = await prisma.review.findMany({
             where: {
                 websiteId
-            }
+            },
+            include: {
+                user: true,
+                upvotes: true
+
+            },
         });
-        res.status(200).json(reviews);
+        res.status(200).json(
+            reviews.map(item => ({
+                id: item.id,
+                content : item.content,
+                rating : item.rating,
+                createdAt: item.createdAt,
+                user : {
+                    name : item.user.name,
+                    avatar: item.user.avatar
+                },
+                upvotes: item.upvotes.map(x => ({
+                        id: x.id,
+                        userId: x.userId,
+                        reviewId: x.reviewId
+                    }
+                ))
+            }))
+        );
     } catch (error) {
-        console.log("Error occured while fetching reviews", error);
+        res.status(500).json({message : "Something went wrong"});
     }
 })
 

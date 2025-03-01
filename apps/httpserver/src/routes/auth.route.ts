@@ -4,6 +4,7 @@ import bcrypt from 'bcrypt';
 import { SigninSchema, SignupSchema } from  '../types';
 import { prisma } from 'db';
 import { JWT_SECRET } from '../config';
+import { authMiddleware } from '../middleware/auth.middleware';
 
 const router = Router()
 
@@ -38,7 +39,6 @@ router.post('/signup', async (req: Request , res: Response) => {
         res.status(200).json({message: "User registered successfully!"})
 
     } catch (error) {
-        console.log("Error on signup",error);
         res.status(500).json({message : 'Something went wrong'});   
     }
 })
@@ -61,7 +61,6 @@ router.post('/signin', async(req: Request , res: Response) => {
             res.status(404).json({message : 'Invalid credentials'});
             return;
         }
-
         const token = jwt.sign({id: user.id}, JWT_SECRET, {expiresIn: '24h'})
         const options = {
             httpOnly : true,
@@ -74,7 +73,25 @@ router.post('/signin', async(req: Request , res: Response) => {
         res.cookie('_token_',token, options);
         res.status(200).json({message: 'Signin successfull!'})
     } catch (error) {
-        console.log("Error on signin",error);
+        res.status(500).json({message : 'Something went wrong'}); 
+    }
+})
+
+router.get('/', authMiddleware , async(req: Request , res: Response) => {
+    const userId = req.id as number;
+    try {
+        const user = await prisma.user.findFirst({
+            where : {
+                id : userId
+            }
+        })
+        res.status(200).json({
+                id: user?.id,
+                name : user?.name,
+                avatar: user?.avatar
+            }
+        )
+    } catch (error) {
         res.status(500).json({message : 'Something went wrong'}); 
     }
 })

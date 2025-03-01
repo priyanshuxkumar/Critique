@@ -21,7 +21,7 @@ router.post('/add', authMiddleware , async(req: Request , res: Response) => {
         })
         res.status(200).json(app);
     } catch (error) {
-        console.log("Error occured add app", error);
+        res.status(500).json({message : "Something went wrong"})
     }
 })
 
@@ -31,7 +31,21 @@ router.get('/', authMiddleware , async (req: Request , res: Response) => {
         const apps = await prisma.website.findMany();
         res.status(200).json(apps);
     } catch (error) {
-        console.log("Error occured add app", error);
+        res.status(500).json({message : "Something went wrong"})
+    }
+})
+
+router.get('/:id', authMiddleware , async (req: Request , res: Response) => {
+    const websiteId = req.params.id; 
+    try {
+        const data = await prisma.website.findFirst({
+            where : {
+                id : websiteId
+            }
+        })
+        res.status(200).json(data);
+    } catch (error) {
+        res.status(500).json({message : "Something went wrong"})
     }
 })
 
