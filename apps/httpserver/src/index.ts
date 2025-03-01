@@ -11,9 +11,16 @@ import { reviewRouter } from './routes/review.route';
 const PORT = process.env.PORT;
 const app = express();
 
+const corsOptions = {
+    origin: process.env.FRONTEND_URL,
+    method: ['GET','POST'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+}
+
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors());
+app.use(cors(corsOptions));
 
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/apps', appsRouter);
