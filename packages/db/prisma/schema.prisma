@@ -14,31 +14,49 @@ datasource db {
 }
 
 model User {
-  id       Int     @id @default(autoincrement())
-  name     String
-  avatar   String?
-  email    String  @unique
-  password String
-
-  reviews Review[]
+  id            Int            @id @default(autoincrement())
+  name          String
+  avatar        String?
+  email         String         @unique
+  password      String
+  createdAt     DateTime       @default(now())
+  reviews       Review[]
+  reviewUpvotes ReviewUpvote[]
 }
 
 model Website {
-  id         String @id @default(uuid())
-  name       String
-  websiteUrl String
-  iconUrl    String
+  id          String   @id @default(uuid())
+  name        String
+  websiteUrl  String
+  iconUrl     String
+  description String
+  createdAt   DateTime @default(now())
 
-  reviews    Review[]
+  reviews Review[]
 }
 
 model Review {
   id      String @id @default(uuid())
   content String
-  userId  Int    
+  rating  Int
+  userId  Int
   user    User   @relation(fields: [userId], references: [id])
 
   websiteId String
-  website   Website @relation(fields: [websiteId], references: [id])
+  website   Website        @relation(fields: [websiteId], references: [id])
+  createdAt DateTime       @default(now())
+  upvotes   ReviewUpvote[]
+
   @@unique([userId, websiteId])
+}
+
+model ReviewUpvote {
+  id     String @id @default(uuid())
+  userId Int
+  user   User   @relation(fields: [userId], references: [id])
+
+  reviewId String
+  review   Review @relation(fields: [reviewId], references: [id])
+
+  @@unique([userId, reviewId])
 }
