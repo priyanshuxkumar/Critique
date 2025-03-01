@@ -16,9 +16,11 @@ export const SigninSchema = z.object({
 export const AddWebsiteSchema = z.object({
     name: z.string(),
     websiteUrl: z.string(),
-    iconUrl: z.string()
+    iconUrl: z.string(),
+    description: z.string(),
 })
 
 export const CreateReviewSchema = z.object({
-    content : z.string()
+    content : z.string(),
+    rating: z.number()
 })
