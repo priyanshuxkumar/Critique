@@ -61,6 +61,13 @@ router.post('/signin', async(req: Request , res: Response) => {
             res.status(404).json({message : 'Invalid credentials'});
             return;
         }
+
+        const isPasswordCorrect = await bcrypt.compare(parsedData.data.password , user.password)
+        if(!isPasswordCorrect){
+            res.status(403).json({mesasge: 'Invalid crendentials'});
+            return;
+        }
+
         const token = jwt.sign({id: user.id}, JWT_SECRET, {expiresIn: '24h'})
         const options = {
             httpOnly : true,
