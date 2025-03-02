@@ -21,6 +21,25 @@ router.post('/create/:id', authMiddleware, async (req: Request , res: Response) 
                 ...parsedData.data,
                 userId,
                 websiteId
+            },
+            select: {
+                id: true,
+                content: true,
+                rating: true,
+                createdAt: true,
+                user: {
+                    select: {
+                        name: true,
+                        avatar: true
+                    }
+                },
+                upvotes: {
+                    select: {
+                        id: true,
+                        userId: true,
+                        reviewId: true
+                    }
+                }
             }
         })
         res.status(200).json(review);
