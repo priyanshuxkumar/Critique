@@ -96,5 +96,18 @@ router.get('/', authMiddleware , async(req: Request , res: Response) => {
     }
 })
 
+router.post('/logout', authMiddleware, async(req: Request , res: Response) => {
+    try {
+        res.clearCookie('_token_', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            path: '/'
+        })
+        res.status(200).json({message: 'logout successfully'});
+    } catch (error) {
+        res.status(500).json({message : 'Something went wrong'});    
+    }
+})
 
 export const authRouter = router;
