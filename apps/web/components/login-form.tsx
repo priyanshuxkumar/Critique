@@ -1,4 +1,4 @@
-import axios from "axios"
+import axios, { AxiosError } from "axios"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import GithubIcon from "./icons/GithubIcon"
+import { toast } from "sonner"
+
 
 export function LoginForm({
   className,
@@ -28,10 +30,16 @@ export function LoginForm({
       }
       );
       if(response.status == 200){
+        toast(response.data.message || "Signin successful!");
         router.push('/dashboard');
       }
-    } catch (error) {
+    } catch (error : unknown) {
       console.error('Error while signin', error);
+      if(error instanceof AxiosError){
+        toast(error?.response?.data.message || "Invalid credentials");
+      }else {
+        toast('Something went wrong!');
+      }
     }finally{
       setIsSubmiting(false);
     }
@@ -62,7 +70,7 @@ export function LoginForm({
           </div>
           <Input onChange={(e) => setPassword(e.target.value)} id="password" type="password" required />
         </div>
-        <Button onClick={ handleForm } type="submit" className="w-full" disabled={isSubmiting}>
+        <Button onClick={ handleForm } type="submit" className="w-full" disabled={isSubmiting || Number(password?.length) < 8}>
           {isSubmiting ? 'Please wait': 'Login'}
         </Button>
         <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">

@@ -11,8 +11,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { useCallback } from "react";
+import { toast } from "sonner";
+
 
 export default function Navbar() {
   const router = useRouter();
@@ -22,10 +24,16 @@ export default function Navbar() {
     try {
       const response = await axios.post('http://localhost:8000/api/v1/auth/logout',{},{withCredentials:true})
       if(response.status == 200){
+        toast(response.data.message);
         router.push('/signin');
       }
     } catch (error) {
       console.error('Error occured while logout', error);
+      if(error instanceof AxiosError){
+        toast(error?.response?.data.message);
+      }else {
+        toast('Something went wrong!');
+      }
     }
   },[router]);
   return (

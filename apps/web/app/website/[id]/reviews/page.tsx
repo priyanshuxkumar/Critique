@@ -13,7 +13,7 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { WebsiteProps } from "@/app/dashboard/page";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import {
   Card,
   CardContent,
@@ -35,6 +35,8 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import Link from "next/link";
 
 interface UpvoteProps {
   id: string;
@@ -122,13 +124,19 @@ export default function Page() {
         withCredentials: true
       })
       if(response.status == 200){
+        /** Showing successfull toast */
+        toast('Review submitted successfully!')
         /** Set newly created review to existed reviews */
         setReviews([response.data, ...(reviews || [])]);
         /** Close the dialog box of add review */
         setDialogOpen(false);
       }
     } catch (error) {
-      console.error('Error occured while submit a review', error);
+      if(error instanceof AxiosError){
+        toast(error.response?.data.message);
+      }else {
+        toast('Something went wrong!');
+      }
     }
   }
   return (
@@ -149,12 +157,15 @@ export default function Page() {
           ) : (
             <div className="flex flex-col md:flex-row gap-2 lg:gap-6 items-start">
               <div className="relative h-16 w-16 overflow-hidden rounded-lg bg-background">
-                <Image
-                  src={website?.iconUrl || "/placeholder.svg"}
-                  alt={`${website?.name} icon`}
-                  fill
-                  className="object-cover"
-                />
+                {website && 
+                  <Image
+                    src={website?.iconUrl}
+                    alt={`${website?.name} icon`}
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className="object-cover"
+                  />
+                }
               </div>
 
               <div className="flex-1">
@@ -163,29 +174,35 @@ export default function Page() {
                 </div>
 
                 <div className="flex items-center gap-2 mt-1">
-                  <a
-                    href={website?.websiteUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-muted-foreground hover:underline flex items-center"
-                  >
-                    {website?.websiteUrl}
-                    <ExternalLink className="h-3 w-3 ml-1" />
-                  </a>
+                  {website && 
+                    <Link
+                      href={website?.websiteUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-muted-foreground hover:underline flex items-center"
+                    >
+                      {website?.websiteUrl}
+                      <ExternalLink className="h-3 w-3 ml-1" />
+                    </Link>
+                  }
                 </div>
 
                 <p className="mt-2 text-muted-foreground">
-                  {website?.description || "No description available."}
+                  {website?.description}
                 </p>
 
                 <div className="flex flex-wrap items-center gap-6 mt-2">
-                  <p className="text-md text-muted-foreground">
-                    {reviews?.length} reviews
-                  </p>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    Added on 22/12/12
-                  </div>
+                  {reviews?.length &&
+                    <p className="text-md text-muted-foreground">
+                      {reviews?.length} reviews
+                    </p>
+                  }
+                  {website && 
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <Calendar className="h-4 w-4 mr-1" />
+                      Added on {new Date(website?.createdAt).toLocaleDateString()}
+                    </div>
+                  } 
                 </div>
               </div>
             </div>
@@ -370,11 +387,19 @@ function useReviewUpvote(upvotes: UpvoteProps[]) {
         }
       );
       if (response.status == 200) {
+        /** Upvote successfull toast */
+        toast(response.data.message);
+        /** Mark hasUpvote as true for highlight the color of upvote icon */
         setHasUpvoted((prev) => !prev);
+        /** Increase count of upvotes on successfull response */
         setUpvoteCount(prev => prev + 1);
       }
     } catch (error) {
-      console.error("Error occured upvote review", error);
+      if(error instanceof AxiosError){
+        toast(error.response?.data.message);
+      }else {
+        toast('Something went wrong!');
+      }
     }
   }, []);
   return {
