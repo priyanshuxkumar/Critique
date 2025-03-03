@@ -13,7 +13,7 @@ router.post('/signup', async (req: Request , res: Response) => {
         const body = req.body;
         const parsedData = SignupSchema.safeParse(body)
         if(!parsedData.success){
-            res.status(400).json({message: 'Invalid Input'});
+            res.status(400).json({message: parsedData.error.issues[0].message});
             return;
         }
         const user = await prisma.user.findFirst({
@@ -48,7 +48,7 @@ router.post('/signin', async(req: Request , res: Response) => {
         const body = req.body;
         const parsedData = SigninSchema.safeParse(body)
         if(!parsedData.success){
-            res.status(400).json({message: 'Invalid Input'});
+            res.status(400).json({message: parsedData.error.issues[0].message});
             return;
         }
         const user = await prisma.user.findFirst({

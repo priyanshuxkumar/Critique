@@ -1,16 +1,17 @@
 import z from 'zod'
 
 export const EmailSchema = z.string().email('Invalid Email format'); 
+export const PasswordSchema = z.string().min(8, { message: 'Enter minimum 8 character password' });
 
 export const SignupSchema = z.object({
     name: z.string(),
     email : EmailSchema,
-    password: z.string().min(8),
+    password: PasswordSchema,
 })
 
 export const SigninSchema = z.object({
     email: EmailSchema,
-    password: z.string().min(8),
+    password: PasswordSchema,
 })
 
 export const AddWebsiteSchema = z.object({
