@@ -11,12 +11,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
-import axios from "axios";
+import React, { useCallback, useEffect, useState } from "react";
+import axios, { AxiosError } from "axios";
 import { Search } from "lucide-react";
 import Loading from "@/components/Loading";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import AddWebsite from "@/components/AddWebsite";
+import { toast } from "sonner";
 
 export interface WebsiteProps {
   id: string;
@@ -26,7 +28,6 @@ export interface WebsiteProps {
   description: string;
   createdAt: Date
 }
-
 
 export default function Page() {
   const router = useRouter();
@@ -44,7 +45,11 @@ export default function Page() {
         setWebsites(response.data);
       }
     } catch (error) {
-      console.error("Error occured while fetch website", error);
+      if(error instanceof AxiosError){
+        toast(error.response?.data.message || 'Something went wrong');
+      }else {
+        toast('Failed to fetch websites');
+      }
     }finally{
       setLoading(false);
     }
@@ -57,8 +62,118 @@ export default function Page() {
   const filteredWebsites = websites.filter((site) =>
       site.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       site.websiteUrl.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+  );
+
+  /** Controls the visibility of the "Add Review" dialog box */
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+ /** Tracks the upload state of the website icon */
+  const [addWebsiteData , setAddWebsiteData] = useState({
+    name : '',
+    websiteUrl: '',
+    description: '',
+    iconUrl: ''
+  });
+
+  /** Loading State for Website icon uploading  */
+  const [isMediaUploading , setIsMediaUploading] = useState(false);
+
+  /**
+   * Handles file selection and uploads the website icon to AWS S3.
+   * 
+   * @param {HTMLInputElement} input - The input element for selecting a file.
+   * @returns {(e: Event)} Event handler that processes the file upload.
+   */
+  const handleInputChange = useCallback((input: HTMLInputElement) => {
+    return async(e: Event) => {
+      try {
+        e.preventDefault();
+        const file = input.files?.item(0);
+        if(!file) return;
+
+        // Check the selected file size should less than 100kb
+        const sizeInKb = (file.size / 1024).toFixed(2);
+        if(Number(sizeInKb) > 100){
+          toast('Please select media under 100kb');
+          setDialogOpen(!dialogOpen);
+          return;
+        }
+
+        setIsMediaUploading(true);
+        const response = await axios.post('http://localhost:8000/api/v1/apps/get-signed-url/website-icon', {
+          imageName: file.name,
+          imageType: file.type
+        },{
+          withCredentials: true
+        })
+        setIsMediaUploading(false);
+        if(response.data) {
+          await axios.put(response.data, file, {
+            headers: {
+              'Content-Type' : file.type
+            }
+          })
+          const url = new URL(response.data);
+          const myFilePath = `${url.origin}${url.pathname}`;
+          if(url) {
+            toast('Media selected successfully!');
+          }
+          setAddWebsiteData((prev) => ({...prev , iconUrl: myFilePath}));
+        }
+      } catch (error) {
+        if(error instanceof AxiosError){
+          toast(error.response?.data.message || 'Something went wrong');
+        }else {
+          toast('Failed to upload media');
+        }
+      } finally {
+        setIsMediaUploading(false);
+      }
+    }
+  },[dialogOpen]);
+
+   /**
+   * Opens the file picker to allow the user to select an image.
+   * Supported formats: JPG, JPEG, PNG.
+   */
+  const handleSelectImg = useCallback(() => {
+    const input = document.createElement('input');
+    input.setAttribute('type', 'file');
+    input.setAttribute('accept', '.jpg , .jpeg, .png');
+
+    const handlerFn = handleInputChange(input);
+
+    input.addEventListener('change', handlerFn);
+    input.click();
+  },[handleInputChange]);
+
+  /**
+   * Sends a POST request to add a new website.
+   */
+  async function handleAddWebsite () {
+    try {
+      const response = await axios.post(`http://localhost:8000/api/v1/apps/add`, 
+        {
+          ...addWebsiteData
+        }, 
+        {
+          withCredentials: true
+        }
+      );
+      if(response.status == 200){
+        setDialogOpen(!dialogOpen);
+        setWebsites((prev) => [response.data, ...prev]);
+      }
+    } catch (error) {
+      if(error instanceof AxiosError){
+        toast(error.response?.data.message || 'Something went wrong');
+      }else {
+        toast('Failed to add website. Please try again.');
+      }
+    }
+  }
   return (
+    <>
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-8">
         <div className="flex flex-col gap-2 mb-8">
@@ -82,7 +197,7 @@ export default function Page() {
         <div className="mb-6">
           <h2 className="text-xl font-medium mb-4">Your Websites</h2>
 
-          {loading ? (<Loading size={40} strokeWidth={1}/>) : (filteredWebsites.length === 0 && searchQuery ? (
+          {loading ? (<Loading size={40} strokeWidth={2}/>) : (filteredWebsites.length === 0 && searchQuery ? (
             <div className="text-center py-12 bg-muted/50 rounded-lg">
               <p className="text-muted-foreground">No websites found matching your search criteria.</p>
             </div>
@@ -93,13 +208,15 @@ export default function Page() {
                   <CardHeader className="pb-2">
                     <div className="flex items-center gap-3">
                       <div className="relative h-10 w-10 overflow-hidden rounded-md bg-muted">
-                        <Image
-                          src={site.iconUrl || "/placeholder.svg"}
-                          alt={`${site.name} icon`}
-                          fill
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                          className="object-cover"
-                        />
+                        {site && 
+                          <Image
+                            src={site?.iconUrl}
+                            alt={`${site.name} icon`}
+                            fill
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            className="object-cover"
+                          />
+                        }
                       </div>
                       <div>
                         <CardTitle className="text-lg">{site.name}</CardTitle>
@@ -125,17 +242,41 @@ export default function Page() {
                     <Button size="sm">Review</Button>
                   </CardFooter>
                 </Card>
-                
               ))}
             </div>
           ))}
         </div>
         <div className="rounded-lg p-6 mt-8">
           <h2 className="text-xl font-medium mb-2">Add a new website</h2>
-          <p className="text-muted-foreground mb-4">Want to add another website to your dashboard?</p>
-          <Button>Add Website</Button>
+          <p className="text-muted-foreground mb-4">Want to add your website to dashboard?</p>
+          <div >
+            {/*
+              * Component: <AddWebsite />
+              * Purpose: To take the payload from user to add website 
+              *
+              * Props:
+              * - dialogOpen: Boolean state controlling the visibility of the "Add Website" modal.
+              * - setDialogOpen: Function to update the dialogOpen state.
+              * - addWebsiteData: Object storing form data for the new website.
+              * - setAddWebsiteData: Function to update addWebsiteData state.
+              * - handleSelectImg: Function to select and set an image (icon) for the website.
+              * - isMediaUploading: Boolean state indicating whether the website icon is being uploaded.
+              * - handleAddWebsite: Function to send a POST request to add the new website.
+              */}
+            {<AddWebsite  
+                dialogOpen={dialogOpen} 
+                setDialogOpen={setDialogOpen} 
+                addWebsiteData={addWebsiteData} 
+                setAddWebsiteData={setAddWebsiteData} 
+                handleSelectImg={handleSelectImg} 
+                isMediaUploading={isMediaUploading} 
+                handleAddWebsite={handleAddWebsite}
+              />
+            }
+          </div>
         </div>
     </main>
   </div>
+  </>
   );
 }

@@ -87,7 +87,13 @@ function useFetchWebsiteAndReviewsData() {
         setWebsite(websiteRes.data);
         setReviews(reviewsRes.data);
       })
-      .catch((err) => console.error("Error fetching data:", err))
+      .catch((error) => {
+        if(error instanceof AxiosError){
+          toast(error.response?.data.message || 'Something went wrong');
+        }else {
+          toast('Failed to fetch data');
+        }
+      })
       .finally(() => setLoading(false));
   }, [id]);
 

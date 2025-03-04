@@ -1,7 +1,8 @@
 'use client';
 
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import React, { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface User {
     id : number
@@ -42,7 +43,11 @@ export const UserProvider : React.FC<UserProviderProps> = ({children}) => {
                    setIsAuthenticated(true);
                 }
             } catch (error) {
-                console.error('Error occured while fetching user data', error);
+                if(error instanceof AxiosError){
+                    toast(error.response?.data.message || 'Something went wrong');
+                }else {
+                    toast('Failed to fetch user details!');
+                }
             }
         })()
     },[]);

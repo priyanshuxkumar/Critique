@@ -17,6 +17,13 @@ const nextConfig: NextConfig = {
           pathname: '**',
           search: '',
         },
+        {
+          protocol: 'https',
+          hostname: 'critique-y.s3.ap-south-1.amazonaws.com',
+          port: '',
+          pathname: '**',
+          search: '',
+        },
       ],
     },
 };

@@ -28,7 +28,6 @@ export default function Navbar() {
         router.push('/signin');
       }
     } catch (error) {
-      console.error('Error occured while logout', error);
       if(error instanceof AxiosError){
         toast(error?.response?.data.message);
       }else {

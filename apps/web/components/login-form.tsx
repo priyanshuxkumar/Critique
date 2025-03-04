@@ -34,7 +34,6 @@ export function LoginForm({
         router.push('/dashboard');
       }
     } catch (error : unknown) {
-      console.error('Error while signin', error);
       if(error instanceof AxiosError){
         toast(error?.response?.data.message || "Invalid credentials");
       }else {
