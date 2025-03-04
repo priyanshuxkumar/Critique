@@ -6,7 +6,7 @@ export const authMiddleware = (req: Request , res: Response , next: NextFunction
     try {
         const token = req.cookies._token_;
         if(!token){
-            res.status(401).json({message: "Authenticated"});
+            res.status(401).json({message: "Unauthenticated!. Please login"});
             return;
         }
 
@@ -15,7 +15,7 @@ export const authMiddleware = (req: Request , res: Response , next: NextFunction
             req.id = payload.id;
             next();
         }else {
-            res.status(401).json({message: "Unauthorized"});
+            res.status(401).json({message: "Unauthorized Access"});
             return;
         }
     } catch (error) {
