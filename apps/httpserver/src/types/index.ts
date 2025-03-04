@@ -25,3 +25,8 @@ export const CreateReviewSchema = z.object({
     content : z.string(),
     rating: z.number()
 })
+
+export const GetSignedUrlOfWebsiteIcon = z.object({
+    imageName: z.string(),
+    imageType: z.string()
+})
