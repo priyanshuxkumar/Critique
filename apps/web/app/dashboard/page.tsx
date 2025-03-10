@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import AddWebsite from "@/components/AddWebsite";
 import { toast } from "sonner";
+import Navbar from "@/components/Navbar";
 
 export interface WebsiteProps {
   id: string;
@@ -175,7 +176,8 @@ export default function Page() {
   return (
     <>
     <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-8">
+      <Navbar/>
+      <main className="container mx-auto px-4 py-7">
         <div className="flex flex-col gap-2 mb-8">
           <h1 className="text-3xl font-bold tracking-tight">Websites Dashboard</h1>
           <p className="text-muted-foreground">Manage and review your websites in one place</p>

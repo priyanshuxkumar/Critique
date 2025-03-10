@@ -37,7 +37,7 @@ export default function Navbar() {
   },[router]);
   return (
     <nav className="w-full sticky top-0 z-40 border-b bg-inherit">
-      <div className="w-full flex h-14 items-center justify-between py-4 px-4 lg:px-10">
+      <div className="w-full flex h-14 items-center justify-between py-4 px-4 lg:px-20">
         <div className="flex items-center gap-2">
           <Star className="h-6 w-6 text-primary" />
           <span
