@@ -9,7 +9,7 @@ const addReview = async (req: Request , res: Response) => {
         const body = req.body;
         const parsedData = CreateReviewSchema.safeParse(body);
         if(!parsedData.success){
-            res.status(400).json({message: "Invalid Input"})
+            res.status(400).json({message: parsedData.error.issues[0].message ?? "Invalid Input"})
             return;
         }
 

@@ -1,7 +1,7 @@
 import z from 'zod'
 
 export const EmailSchema = z.string().email('Invalid Email format'); 
-export const PasswordSchema = z.string().min(8, { message: 'Enter minimum 8 character password' });
+export const PasswordSchema = z.string().min(8, { message: 'Enter minimum 8 characters password' });
 
 export const SignupSchema = z.object({
     name: z.string(),
@@ -16,9 +16,9 @@ export const SigninSchema = z.object({
 
 export const AddWebsiteSchema = z.object({
     name: z.string(),
-    websiteUrl: z.string(),
+    websiteUrl: z.string().url('Enter valid website url'),
     iconUrl: z.string().optional(),
-    description: z.string(),
+    description: z.string().min(20 , {message: 'Enter minimum 20 characters description'}),
 })
 
 export const CreateReviewSchema = z.object({
