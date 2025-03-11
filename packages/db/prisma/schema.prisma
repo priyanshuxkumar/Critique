@@ -28,7 +28,7 @@ model Website {
   id          String   @id @default(uuid())
   name        String
   websiteUrl  String
-  iconUrl     String
+  iconUrl     String?
   description String
   createdAt   DateTime @default(now())
 
