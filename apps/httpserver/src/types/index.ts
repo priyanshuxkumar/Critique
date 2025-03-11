@@ -17,7 +17,7 @@ export const SigninSchema = z.object({
 export const AddWebsiteSchema = z.object({
     name: z.string(),
     websiteUrl: z.string(),
-    iconUrl: z.string(),
+    iconUrl: z.string().optional(),
     description: z.string(),
 })
 
