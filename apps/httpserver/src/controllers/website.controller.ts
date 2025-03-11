@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { AddWebsiteSchema, GetSignedUrlOfWebsiteIcon } from '../types';
+import { AddWebsiteSchema, GetSignedUrlOfWebsiteIconSchema } from '../types';
 import { prisma } from 'db';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -67,8 +67,7 @@ const getSignedUrlWebsiteIcon = async (req: Request , res: Response) => {
     const userId = req.id;
     try {
         const body = req.body;
-        console.log(body)
-        const parsedData = GetSignedUrlOfWebsiteIcon.safeParse(body);
+        const parsedData = GetSignedUrlOfWebsiteIconSchema.safeParse(body);
         if(!parsedData.success){
             res.status(400).json({message: parsedData.error.issues[0].message ?? "Invalid Input"});
             return;

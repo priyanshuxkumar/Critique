@@ -1,6 +1,10 @@
 import { Request, Response } from 'express';
-import { CreateReviewSchema } from '../types';
+import { CreateReviewSchema, GetSignedUrlOfReviewSchema } from '../types';
 import { prisma } from 'db';
+
+import { PutObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { s3Client } from '../config';
 
 const addReview = async (req: Request , res: Response) => {
     const userId = req.id as number;
@@ -85,4 +89,27 @@ const getReviewsOfWebsite = async(req: Request , res: Response) => {
     }
 }
 
-export { addReview , getReviewsOfWebsite }
+const getSignedUrlOfReview = async(req: Request , res: Response) => {
+    const userId = req.id as number;
+    try {
+        const body = req.body;
+        const parsedData = GetSignedUrlOfReviewSchema.safeParse(body);
+        if(!parsedData.success){
+            res.status(400).json({message: parsedData.error.issues[0].message ?? "Invalid Input"});
+            return;
+        }
+        const fileName = parsedData.data.videoName;
+        
+        const putObjectCommand = new PutObjectCommand({
+            Bucket: process.env.S3_BUCKET_NAME || "",
+            Key: `upload/review/video/${userId}/-${Date.now()}-${fileName}`
+        });
+        const signedUrl = await getSignedUrl(s3Client, putObjectCommand);
+        res.status(200).json(signedUrl);
+    } catch (error) {
+        console.error('Error occured while getting signed url', error);
+        res.status(500).json({ message: 'Something went wrong' });
+    }
+}
+
+export { addReview , getReviewsOfWebsite, getSignedUrlOfReview }
