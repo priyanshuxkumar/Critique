@@ -23,7 +23,8 @@ export const AddWebsiteSchema = z.object({
 
 export const CreateReviewSchema = z.object({
     content : z.string(),
-    rating: z.number()
+    rating: z.number(),
+    videoUrl: z.string().optional(),
 })
 
 export const GetSignedUrlOfWebsiteIconSchema = z.object({
