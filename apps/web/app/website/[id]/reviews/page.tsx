@@ -204,7 +204,7 @@ export default function Page() {
           {loading ? (
             <Loading size={40} strokeWidth={2} />
           ) : (
-            <div className="flex flex-col md:flex-row gap-2 lg:gap-6 items-start">
+            <div className="flex gap-2 lg:gap-6 items-start">
               <div className="relative h-16 w-16 overflow-hidden rounded-lg bg-background">
                 {website?.iconUrl && 
                   <Image

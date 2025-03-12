@@ -1,18 +1,34 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, Star, Video, MessageSquare, Globe, TrendingUp, Shield, ChevronRight } from "lucide-react"
+import { Search, Video, MessageSquare, Globe, ChevronRight } from "lucide-react"
 import ReviewImg from "@/components/icons/ReviewImg"
 import Header from "@/components/Header"
 
-
+const features = [
+  {
+    icon : <MessageSquare size={45}/>,
+    title : 'Text Reviews',
+    description : 'Share detailed written reviews about your website experiences'
+  },
+  {
+    icon : <Video size={45}/>,
+    title : 'Video Reviews',
+    description : 'Record and upload video reviews for more engaging feedback'
+  },
+  {
+    icon : <Globe size={45}/>,
+    title : 'Any Website',
+    description : 'Review any website on the internet without restrictions'
+  },
+]
 
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col">
       {/* Header  */}
       <Header/>
-      <main className="flex-1">
+      <main className="flex-1 px-6">
         {/* Hero  */}
         <section className="w-full py-6 md:py-12 lg:py-16 xl:py-24">
           <div className="container mx-auto md:mx-auto">
@@ -28,12 +44,16 @@ export default function Home() {
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                  <Button size="lg" className="gap-1">
-                    Start Reviewing <ChevronRight className="h-4 w-4" />
-                  </Button>
-                  <Button size="lg" variant="outline">
-                    Explore Reviews
-                  </Button>
+                  <Link href={'/signup'}>
+                    <Button size="lg" className="gap-1">
+                      Start Reviewing <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <Link href={'/dashboard'}>
+                    <Button size="lg" variant="outline">
+                      Explore Reviews
+                    </Button>
+                  </Link>
                 </div>
               </div>
               <div className="flex items-center justify-center">
@@ -48,7 +68,7 @@ export default function Home() {
         {/* Search  */}
         <section id="search" className="w-full py-6 md:py-12 lg:py-16 bg-muted">
           <div className="container mx-auto md:mx-auto">
-            <div className="mx-auto flex max-w-[800px] flex-col items-center justify-center space-y-4 text-center">
+            <div className="mx-auto flex max-w-[800px] flex-col items-center justify-center space-y-4 text-center px-4">
               <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Find Reviews For Any Website</h2>
               <p className="max-w-[600px] text-muted-foreground md:text-xl">
                 Looking for honest opinions before you visit a website? Search our database of user-submitted reviews.
@@ -68,7 +88,7 @@ export default function Home() {
         </section>
 
         {/* Features  */}
-        <section id="features" className="w-full py-12 md:py-20 lg:py-24">
+        <section id="features" className="w-full py-12 md:py-12 lg:py-20">
           <div className="container mx-auto md:mx-auto">
             <div className="mx-auto flex max-w-[58rem] flex-col items-center justify-center space-y-4 text-center">
               <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Powerful Review Features</h2>
@@ -77,76 +97,25 @@ export default function Home() {
               </p>
             </div>
             <div className="mx-auto grid justify-center gap-4 sm:grid-cols-2 md:max-w-[64rem] md:grid-cols-3 lg:gap-8 mt-8">
-              <div className="relative overflow-hidden rounded-lg border bg-background p-2">
+              {features && features.map ((item , i) => (
+                <div key={i} className="relative overflow-hidden rounded-lg border bg-background p-2">
                 <div className="flex h-[180px] flex-col justify-between rounded-md p-6">
-                  <MessageSquare className="h-12 w-12 text-primary" />
+                  {item.icon}
                   <div className="space-y-2">
-                    <h3 className="font-bold">Text Reviews</h3>
+                    <h3 className="font-bold">{item.title}</h3>
                     <p className="text-sm text-muted-foreground">
-                      Share detailed written reviews about your website experiences
+                      {item.description}
                     </p>
                   </div>
                 </div>
               </div>
-              <div className="relative overflow-hidden rounded-lg border bg-background p-2">
-                <div className="flex h-[180px] flex-col justify-between rounded-md p-6">
-                  <Video className="h-12 w-12 text-primary" />
-                  <div className="space-y-2">
-                    <h3 className="font-bold">Video Reviews</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Record and upload video reviews for more engaging feedback
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="relative overflow-hidden rounded-lg border bg-background p-2">
-                <div className="flex h-[180px] flex-col justify-between rounded-md p-6">
-                  <Globe className="h-12 w-12 text-primary" />
-                  <div className="space-y-2">
-                    <h3 className="font-bold">Any Website</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Review any website on the internet without restrictions
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="relative overflow-hidden rounded-lg border bg-background p-2">
-                <div className="flex h-[180px] flex-col justify-between rounded-md p-6">
-                  <TrendingUp className="h-12 w-12 text-primary" />
-                  <div className="space-y-2">
-                    <h3 className="font-bold">Trending Reviews</h3>
-                    <p className="text-sm text-muted-foreground">Discover popular websites and trending reviews</p>
-                  </div>
-                </div>
-              </div>
-              <div className="relative overflow-hidden rounded-lg border bg-background p-2">
-                <div className="flex h-[180px] flex-col justify-between rounded-md p-6">
-                  <Shield className="h-12 w-12 text-primary" />
-                  <div className="space-y-2">
-                    <h3 className="font-bold">Verified Reviews</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Trust our verification system for authentic feedback
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="relative overflow-hidden rounded-lg border bg-background p-2">
-                <div className="flex h-[180px] flex-col justify-between rounded-md p-6">
-                  <Star className="h-12 w-12 text-primary" />
-                  <div className="space-y-2">
-                    <h3 className="font-bold">Rating System</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Rate websites on multiple factors for comprehensive reviews
-                    </p>
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </section>
 
         {/* CTA  */}
-        <section id="cta" className="w-full py-6 md:py-12 lg:py-16">
+        <section id="cta" className="w-full py-6 md:py-12 lg:py-14">
           <div className="container mx-auto md:mx-auto">
             <div className="mx-auto flex max-w-[50rem] flex-col items-center justify-center space-y-4 text-center">
               <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Start Sharing Your Experiences Today</h2>
@@ -154,9 +123,11 @@ export default function Home() {
                 Join our community of reviewers and help others make informed decisions about the websites they visit
               </p>
               <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                <Button size="lg" className="gap-1">
-                  Create Free Account <ChevronRight className="h-4 w-4" />
-                </Button>
+                <Link href={'/signup'}>
+                  <Button size="lg" className="gap-1">
+                    Create Free Account <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </Link>
                 <Button size="lg" variant="outline">
                   Learn More
                 </Button>
