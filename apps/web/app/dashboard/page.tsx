@@ -39,7 +39,7 @@ export default function Page() {
   const fetchWebsite = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`http://localhost:8000/api/v1/apps`, {
+      const response = await axios.get(`http://localhost:8000/api/v1/website`, {
         withCredentials: true,
       });
       if (response.status == 200) {
@@ -101,7 +101,7 @@ export default function Page() {
         }
 
         setIsMediaUploading(true);
-        const response = await axios.post('http://localhost:8000/api/v1/apps/get-signed-url/website-icon', {
+        const response = await axios.post('http://localhost:8000/api/v1/website/get-signed-url/website-icon', {
           imageName: file.name,
           imageType: file.type
         },{
@@ -153,7 +153,7 @@ export default function Page() {
    */
   async function handleAddWebsite () {
     try {
-      const response = await axios.post(`http://localhost:8000/api/v1/apps/add`, 
+      const response = await axios.post(`http://localhost:8000/api/v1/website/add`, 
         {
           ...addWebsiteData
         }, 
@@ -210,7 +210,7 @@ export default function Page() {
                   <CardHeader className="pb-2">
                     <div className="flex items-center gap-3">
                       <div className="relative h-10 w-10 overflow-hidden rounded-md bg-muted">
-                        {site && 
+                        {site.iconUrl && 
                           <Image
                             src={site?.iconUrl}
                             alt={`${site.name} icon`}
