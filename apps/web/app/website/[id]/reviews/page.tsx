@@ -37,6 +37,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import Link from "next/link";
+import RecordMedia from "@/components/RecordMedia";
 
 interface UpvoteProps {
   id: string;
@@ -76,7 +77,7 @@ function useFetchWebsiteAndReviewsData() {
     if (!id) return;
     setLoading(true);
     Promise.all([
-      axios.get(`http://localhost:8000/api/v1/apps/${id}`, {
+      axios.get(`http://localhost:8000/api/v1/website/${id}`, {
         withCredentials: true,
       }),
       axios.get(`http://localhost:8000/api/v1/review/${id}`, {
@@ -118,14 +119,20 @@ export default function Page() {
   /** State for dialog box of add review */
   const [dialogOpen, setDialogOpen] = useState(false)
 
-  /** Add new review function */
+  /** Add new review functionality */
   const [newReviewRatings , setNewReviewRatings] = useState<number>(5);
   const [newReviewContent , setNewReviewContent] = useState<string>('');
+
+  /** State for review video url */
+  const [reviewVideoUrl, setReviewVideoUrl] = useState<string | null>(null);
+
+  /** Handle submit review functionality */
   const handleSubmitReview = async() => {
     try {
       const response = await axios.post(`http://localhost:8000/api/v1/review/create/${id}`, {
         rating: newReviewRatings,
-        content: newReviewContent
+        content: newReviewContent,
+        videoUrl: reviewVideoUrl
       },{
         withCredentials: true
       })
@@ -142,9 +149,45 @@ export default function Page() {
         toast(error.response?.data.message);
       }else {
         toast('Something went wrong!');
-      }
+      } 
     }
   }
+
+  /** Get presignedUrl of review(video) and upload it to s3 */
+  const handleVideoUpload = useCallback(async(blob : Blob) => {
+    try {
+      const videoFile = new File([blob as Blob], 'review-video.webm', { type: 'video/webm' });
+      const response = await axios.post(`http://localhost:8000/api/v1/review/get-signed-url`, {
+        videoName : videoFile.name,
+      },{
+        withCredentials: true
+      })
+      if(response.status == 200){
+        if(response.data){
+          await axios.put(response.data, videoFile, {
+            headers: {
+              'Content-Type': videoFile.type
+            }
+          })
+          const url = new URL(response.data);
+          const myFilePath = `${url.origin}${url.pathname}`;
+          setReviewVideoUrl(myFilePath);
+          if(url) {
+            toast('Media selected successfully!');
+          }
+        }
+      }
+    } catch (error) {
+      if(error instanceof AxiosError){
+        toast(error.response?.data.message || 'Something went wrong');
+      }else {
+        toast('Failed to upload media');
+      }
+      console.error('Error occured while uploading video', error);
+    }
+  },[]);
+
+
   return (
     <div className="min-h-screen bg-background">
       <div className="bg-slate-50 sticky top-0 z-50">
@@ -163,7 +206,7 @@ export default function Page() {
           ) : (
             <div className="flex flex-col md:flex-row gap-2 lg:gap-6 items-start">
               <div className="relative h-16 w-16 overflow-hidden rounded-lg bg-background">
-                {website && 
+                {website?.iconUrl && 
                   <Image
                     src={website?.iconUrl}
                     alt={`${website?.name} icon`}
@@ -198,7 +241,7 @@ export default function Page() {
                 </p>
 
                 <div className="flex flex-wrap items-center gap-6 mt-2">
-                  {reviews?.length &&
+                  {reviews && reviews?.length > 0 &&
                     <p className="text-md text-muted-foreground">
                       {reviews?.length} reviews
                     </p>
@@ -262,6 +305,13 @@ export default function Page() {
                       placeholder="Share details of your experience with this website"
                     />
                   </div>
+                  {/* Record user video of review */}
+                  <div> 
+                  {/** Component for Record review(video) of user 
+                     *  @param {function} handleVideoUpload - Function to handle video upload
+                    */}
+                    <RecordMedia handleVideoUpload={handleVideoUpload}/>
+                  </div>
                 </div>
                 <DialogFooter>
                   <Button type="submit" onClick={handleSubmitReview} disabled={!newReviewContent || !newReviewRatings}>
@@ -274,9 +324,8 @@ export default function Page() {
         </div>
 
         <div className="w-full gap-6 flex justify-center items-center flex-wrap">
-          {loading ? (
-            <Loading size={40} strokeWidth={2} />
-          ) : (
+          {loading ? ( <Loading size={40} strokeWidth={2} />) : (
+            reviews && reviews?.length > 0 ? (
             reviews?.map((item) => (
               <Card key={item.id} className="w-full lg:w-[calc((100%-12px)/4)] max-h-[430px]  shadow-none py-4 gap-4 rounded-lg">
                 <CardHeader className="pb-3">
@@ -326,7 +375,9 @@ export default function Page() {
                 <ReviewFooter upvotes={item?.upvotes as UpvoteProps[]} reviewId={item?.id} />
               </Card>
             ))
-          )}
+          ) : (
+            <p className="text-muted-foreground text-xl">No reviews found</p>
+          ))}
         </div>
       </main>
     </div>
