@@ -270,12 +270,12 @@ export default function Page() {
                   Add Review
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[525px]">
+              <DialogContent className="h-fit">
                 <DialogHeader>
                   <DialogTitle>Add a Review</DialogTitle>
                   <DialogDescription>Share your experience with {website?.name}</DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
+                <div className="grid gap-2 lg:gap-4 py-3 lg:py-4">
                   <div className="grid gap-2">
                     <Label htmlFor="rating">Rating</Label>
                     <div className="flex gap-1">
