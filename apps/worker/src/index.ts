@@ -1,7 +1,6 @@
 import { redisClient }  from "redisclient";
 import { sendVerificationEmail, sendWelcomeEmail } from "./email/email";
 
-console.log('Started');
 
 (function startEmailProcessor() {
     console.log('Starting email processor...');
@@ -20,14 +19,19 @@ async function processVerificationEmails() {
             
             if (result) {
                 const email = result.element;
-                console.log('Email received',email);
                 try {
                     const response = await sendVerificationEmail(email as string);
                     if(response.status === true) {
                         console.log('Email sent successfully');
                     }
-                } catch (error) {
-                    console.error('Error sending email:', error);
+                } catch (error : unknown) {
+                    if(error instanceof Error) {
+                        if(error.message === "Email is required") {
+                            console.error('Email is required');
+                        } else {
+                            console.error('Error sending email:', error.message);
+                        }
+                    }
                 }
             }
         } catch (error) {
@@ -50,8 +54,14 @@ async function processWelcomeEmails() {
                     if(response.status === true) {
                         console.log('Email sent successfully');
                     }
-                } catch (error) {
-                    console.error('Error sending email:', error);
+                } catch (error : unknown) {
+                    if(error instanceof Error) {
+                        if(error.message === "Email or username is required") {
+                            console.error('Email or username is required');
+                        } else {
+                            console.error('Error sending email:', error.message);
+                        }
+                    }
                 }
             }
         } catch (error) {
