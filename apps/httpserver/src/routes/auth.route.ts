@@ -10,6 +10,6 @@ router.route("/signin").post(loginUser);
 
 router.route("/").get(authMiddleware, getUser);
 
-router.route('/logout').post(logoutUser);
+router.route("/logout").post(logoutUser);
 
 export const authRouter = router;

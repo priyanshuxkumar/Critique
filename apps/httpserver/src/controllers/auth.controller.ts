@@ -4,6 +4,7 @@ import bcrypt from 'bcrypt';
 import { SigninSchema, SignupSchema } from  '../types';
 import { prisma } from 'db';
 import { JWT_SECRET } from '../config';
+import { redisClient }  from "redisclient";
 
 const registerUser = async(req: Request , res: Response) => {
     try {
@@ -32,7 +33,11 @@ const registerUser = async(req: Request , res: Response) => {
                 password: hashPassword
             }
         })
-        res.status(200).json({message: "User registered successfully!"})
+
+        /** Push the email to redis queue to send verification email  */
+        redisClient.rPush('email_verification_queue', parsedData.data.email);
+
+        res.status(200).json({message: "Check your inbox for verification email!"})
     } catch (error) {
         res.status(500).json({message : 'Something went wrong'});   
     }
