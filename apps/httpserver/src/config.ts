@@ -13,16 +13,7 @@ const s3Client = new S3Client({
   },
 });
 
-/** Email Config */
-// const resend = new Resend(process.env.RESEND_API_KEY!);
-
 /** Frontend Url */
 const FRONTEND_URL = process.env.NODE_ENV == "development" && process.env.FRONTEND_URL;
-
-/** Server Url */ 
-// const SERVER_URL = process.env.NODE_ENV == "development" && process.env.SERVER_URL;
-
-/** Email Config */ 
-const EMAIL_FROM = process.env.EMAIL_FROM;
 
 export { JWT_SECRET, s3Client, FRONTEND_URL };
