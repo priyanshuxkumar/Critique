@@ -1,10 +1,11 @@
 import { Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
+import jwt, { JsonWebTokenError } from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { SigninSchema, SignupSchema } from  '../types';
-import { prisma } from 'db';
-import { JWT_SECRET } from '../config';
+import { Prisma, prisma, User } from 'db';
+import { cookieOptions, JWT_REFRESH_SECRET, JWT_SECRET } from '../config';
 import { redisClient }  from "redisclient";
+import { ZodError } from 'zod';
 
 const registerUser = async(req: Request , res: Response) => {
     try {
@@ -14,7 +15,7 @@ const registerUser = async(req: Request , res: Response) => {
             res.status(400).json({message: parsedData.error.issues[0].message ?? "Invalid Input"});
             return;
         }
-        const user = await prisma.user.findFirst({
+        const user : User | null = await prisma.user.findFirst({
             where: {
                 email: parsedData.data.email
             }
@@ -35,10 +36,27 @@ const registerUser = async(req: Request , res: Response) => {
         })
 
         /** Push the email to redis queue to send verification email  */
-        redisClient.rPush('email_verification_queue', parsedData.data.email);
+        try {
+            redisClient.rPush('email_verification_queue', parsedData.data.email);
+        } catch (error) {
+            res.status(500).json({message: "Failed to send verification email"});
+            return;
+        }
 
         res.status(200).json({message: "Check your inbox for verification email!"})
-    } catch (error) {
+    } catch (error : unknown) {
+        if(error instanceof Prisma.PrismaClientKnownRequestError) {
+            res.status(409).json({message: "User already exists with this email"});
+            return;
+        }
+        if(error instanceof ZodError) {
+            res.status(400).json({message: error.errors[0]?.message || "Invalid input"});
+            return;
+        }
+        if(error instanceof Error) {
+            res.status(500).json({message: error.message});
+            return;
+        }
         res.status(500).json({message : 'Something went wrong'});   
     }
 }
@@ -51,7 +69,7 @@ const loginUser = async(req: Request , res: Response) => {
             res.status(400).json({message: parsedData.error.issues[0].message ?? "Invalid Input"});
             return;
         }
-        const user = await prisma.user.findFirst({
+        const user : User | null = await prisma.user.findFirst({
             where: {
                 email: parsedData.data.email
             }
@@ -68,18 +86,35 @@ const loginUser = async(req: Request , res: Response) => {
             return;
         }
 
-        const token = jwt.sign({id: user.id}, JWT_SECRET, {expiresIn: '24h'})
-        const options = {
-            httpOnly : true,
-            secure: process.env.NODE_ENV === 'production',
-            maxAge: 1000 * 60 * 60 * 24,
-            sameSite: 'strict' as 'strict',
-            path: '/'
-        }
+        const a_token = jwt.sign({id: user.id}, JWT_SECRET, {expiresIn: '24h'})
+        const r_Token = jwt.sign({id: user.id}, JWT_REFRESH_SECRET, {expiresIn: '7d'});
 
-        res.cookie('_token_',token, options);
+        await prisma.user.update({
+            where: {
+                id: user.id
+            },
+            data: {
+                refreshToken: r_Token
+            }
+        })
+
+        res.cookie('_token_', a_token, cookieOptions);
+        res.cookie('_r_token', r_Token, { ...cookieOptions, maxAge: 1000 * 60 * 60 * 24 * 7 });
+
         res.status(200).json({message: 'Signin successfull!'})
-    } catch (error) {
+    } catch (error : unknown) {
+        if(error instanceof Prisma.PrismaClientKnownRequestError) {
+            res.status(404).json({message: "User not found"});
+            return;
+        }
+        if(error instanceof ZodError) {
+            res.status(400).json({message: error.errors[0]?.message || "Invalid input"});
+            return;
+        }
+        if(error instanceof Error) {
+            res.status(500).json({message: error.message});
+            return;
+        }
         res.status(500).json({message : 'Something went wrong'}); 
     }
 }
@@ -87,7 +122,7 @@ const loginUser = async(req: Request , res: Response) => {
 const getUser = async(req: Request , res: Response) =>  {
     const userId = req.id as number;
     try {
-        const user = await prisma.user.findFirst({
+        const user : User | null = await prisma.user.findFirst({
             where : {
                 id : userId
             }
@@ -98,23 +133,124 @@ const getUser = async(req: Request , res: Response) =>  {
                 avatar: user?.avatar
             }
         )
-    } catch (error) {
+    } catch (error : unknown) {
+        if(error instanceof Prisma.PrismaClientKnownRequestError) {
+            res.status(404).json({message: "User not found"});
+            return;
+        }
+        if(error instanceof Error) {
+            res.status(500).json({message: error.message});
+            return;
+        }
         res.status(500).json({message : 'Something went wrong'}); 
     }
 }
 
 const logoutUser = async(req: Request , res: Response) =>  {
+    const userId = req.id as number;
+    const refreshToken = req.cookies._r_token;
     try {
-        res.clearCookie('_token_', {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            path: '/'
+        if (!refreshToken) {
+            res.clearCookie("_token_");
+            res.clearCookie("_r_token");
+            res.status(200).json({ message: "Logout successfull" });
+            return;
+        }
+        
+        const user : Pick<User, "id" | "refreshToken"> | null = await prisma.user.findUnique({
+            where: {
+                id : userId
+            },
+            select : {
+                id : true,
+                refreshToken : true
+            }
         })
-        res.status(200).json({message: 'logout successfully'});
+            
+        if(!user) {
+            res.clearCookie("_token_");
+            res.clearCookie("_r_token");
+            res.status(404).json({message: "User not found"});
+            return;
+        }
+
+        if(user.refreshToken !== refreshToken) {
+            res.clearCookie("_token_");
+            res.clearCookie("_r_token");
+            res.status(401).json({message: "Unauthorized"});
+            return;
+        }
+  
+        await prisma.user.update({
+            where: {
+                id: userId
+            },
+            data: {
+                refreshToken: null
+            }
+        })
+
+        res.clearCookie("_token_");
+        res.clearCookie("_r_token");
+        
+        res.status(200).json({message: "Logout successfull"});
+    } catch (error : unknown) {
+        if(error instanceof Prisma.PrismaClientKnownRequestError) {
+            res.status(404).json({message: "User not found"});
+            return;
+        }
+        if(error instanceof Error) {
+            res.status(500).json({message: error.message});
+            return;
+        }
+        res.status(500).json({message : "Something went wrong"});    
+    }
+}
+
+const refreshToken = async(req: Request , res: Response) => {
+    try {
+        const rToken = req.cookies._r_token;
+        if(!rToken) {
+            res.status(401).json({message: "Unauthorized"});
+            return;
+        }
+
+        const decoded = jwt.verify(rToken, JWT_REFRESH_SECRET) as { id: number };
+
+        const user : Pick<User, "id" | "refreshToken"> | null = await prisma.user.findFirst({
+            where: {
+                id: decoded.id
+            },
+            select : {
+                id: true,
+                refreshToken: true
+            }
+        })
+
+        if(!user || user.refreshToken !== rToken) {
+            res.status(401).json({message: "Unauthorized"});
+            return;
+        }
+
+        const newAccessToken = jwt.sign({id: user.id}, JWT_SECRET, {expiresIn: '24h'})
+        res.cookie('_token_', newAccessToken, cookieOptions);
+
+        res.status(200).json({message: 'Token refreshed successfully'});
     } catch (error) {
+        if(error instanceof Prisma.PrismaClientKnownRequestError) {
+            res.status(404).json({message: "User not found"});
+            return;
+        }
+        if(error instanceof JsonWebTokenError) {
+            res.status(401).json({message: "Unauthorized"});
+            return;
+        }
+        if(error instanceof Error) {
+            res.status(500).json({message: error.message});
+            return;
+        }
         res.status(500).json({message : 'Something went wrong'});    
     }
 }
 
-export { registerUser, loginUser, getUser, logoutUser }
+export { registerUser, loginUser, getUser, logoutUser, refreshToken }

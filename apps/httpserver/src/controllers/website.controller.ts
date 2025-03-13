@@ -1,10 +1,11 @@
 import { Request, Response } from 'express';
 import { AddWebsiteSchema, GetSignedUrlOfWebsiteIconSchema } from '../types';
-import { prisma } from 'db';
+import { Prisma, prisma, Website } from 'db';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { s3Client } from '../config';
 import { checkIsWebsiteExist } from '../helper/website';
+import { ZodError } from 'zod';
 
 const addWebsite = async (req: Request , res: Response) => {
     try {
@@ -28,37 +29,56 @@ const addWebsite = async (req: Request , res: Response) => {
             return;
         }
 
-        const website = await prisma.website.create({
+        const website : Website = await prisma.website.create({
             data: {
                 ...parsedData.data
             }
         })
         res.status(200).json(website);
-    } catch (error) {
+    } catch (error : unknown) {
+        if(error instanceof Prisma.PrismaClientKnownRequestError) {
+            res.status(409).json({message : "Website already exists"});
+            return;
+        }
+        if(error instanceof ZodError) {
+            res.status(400).json({message: error.errors[0]?.message || "Invalid input"});
+            return;
+        }
+        if(error instanceof Error) {
+            res.status(500).json({message : error.message});
+            return;
+        }
         res.status(500).json({message : "Something went wrong"})
     }
 }
 
 const getWebsite = async (req: Request , res: Response) => {
     try {
-        const apps = await prisma.website.findMany();
-        res.status(200).json(apps);
-    } catch (error) {
+        const websites : Website[] = await prisma.website.findMany();
+        res.status(200).json(websites);
+    } catch (error : unknown) {
+        if(error instanceof Error) {
+            res.status(500).json({message : error.message});
+            return;
+        }
         res.status(500).json({message : "Something went wrong"})
     }
 }
 
-
 const getWebsiteWithId = async (req: Request , res: Response) => {
     const websiteId = req.params.id; 
     try {
-        const data = await prisma.website.findFirst({
+        const data : Website | null = await prisma.website.findFirst({
             where : {
                 id : websiteId
             }
         })
         res.status(200).json(data);
-    } catch (error) {
+    } catch (error : unknown) {
+        if(error instanceof Error) {
+            res.status(500).json({message: error.message});
+            return;
+        }
         res.status(500).json({message : "Something went wrong"})
     }
 }
@@ -72,18 +92,32 @@ const getSignedUrlWebsiteIcon = async (req: Request , res: Response) => {
             res.status(400).json({message: parsedData.error.issues[0].message ?? "Invalid Input"});
             return;
         }
-        const allowesImageType = ["jpg , jpeg , png"];
-        if(!allowesImageType){
+
+        const allowedImageType = ["jpg" , "jpeg" , "png"];
+        const fileExtension = parsedData.data.imageType.split('.').pop()?.toLocaleLowerCase();
+        
+        if(!fileExtension || !allowedImageType.includes(fileExtension)){
             res.status(400).json({message: 'Invalid image type'})
             return;
         }
+
         const putObjectCommand = new PutObjectCommand({
             Bucket: process.env.S3_BUCKET_NAME || "",
             Key: `upload/website/icon/${userId}/-${Date.now()}/${parsedData.data.imageName}`
         });
+
         const signedUrl = await getSignedUrl(s3Client, putObjectCommand);
+
         res.status(200).json(signedUrl);
-    } catch (error) {
+    } catch (error : unknown) {
+        if(error instanceof ZodError) {
+            res.status(400).json({message: error.errors[0]?.message || "Invalid input"});
+            return;
+        }
+        if(error instanceof Error) {
+            res.status(500).json({message: error.message});
+            return;
+        }
         res.status(500).json({message: 'Something went wrong!'});
     }
 }

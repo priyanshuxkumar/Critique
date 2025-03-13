@@ -1,19 +1,25 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config';
-import { prisma } from 'db';
+import { Prisma, prisma, User } from 'db';
 import { redisClient }  from "redisclient";
 
 const verifyEmail = async(req: Request , res: Response) => {
     try {
         const { token } = req.query;
+
+        if(!token || typeof token !== "string") {
+            res.status(400).json({message : "Invalid request"})
+            return;
+        }
+
         const decoded = jwt.verify(token as string, JWT_SECRET);
         if(typeof decoded === "string" || !decoded.email) {
             res.status(400).json({message : "Invalid request"})
             return;
         }
 
-        const user = await prisma.user.findFirst({
+        const user : User | null = await prisma.user.findFirst({
             where : {
                 email : decoded.email
             }
@@ -33,15 +39,29 @@ const verifyEmail = async(req: Request , res: Response) => {
         })
 
         /** Send welcome email to user */
-        redisClient.rPush('user_welcome_email_queue', JSON.stringify({
-            email: user.email,
-            name: user.name
-        }));
+        try {
+            redisClient.rPush('user_welcome_email_queue', JSON.stringify({
+                email: user.email,
+                name: user.name
+            }));
+        } catch (error) {
+            res.status(500).json({ message: "Failed to send welcome email" });
+            return;
+        }
 
         res.status(200).json({message: "Email verified successfully"});
-    } catch (error) {
-        console.log(error);   
-        res.status(500).json({ message: 'Invalid or expired token' });
+    } catch (error : unknown) {
+        if(error instanceof jwt.JsonWebTokenError) {
+            res.status(400).json({ message: 'Invalid or expired token' });
+            return;
+        }
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            if (error.code === "P2025") {
+                res.status(404).json({ message: "User not found. Please signup again" });
+                return;
+            }
+        }
+        res.status(500).json({ message: 'Something went wrong' });
     }
 }
 

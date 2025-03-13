@@ -1,10 +1,11 @@
 import { Request, Response } from 'express';
 import { CreateReviewSchema, GetSignedUrlOfReviewSchema } from '../types';
-import { prisma } from 'db';
+import { Prisma, prisma, Review, ReviewUpvote, User } from 'db';
 
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { s3Client } from '../config';
+import { ZodError } from 'zod';
 
 const addReview = async (req: Request , res: Response) => {
     const userId = req.id as number;
@@ -17,7 +18,10 @@ const addReview = async (req: Request , res: Response) => {
             return;
         }
 
-        const review = await prisma.review.create({
+        const review : Pick<Review, "id" | "content" | "rating" | "createdAt"> & {
+            user : {name : string; avatar: string | null};
+            upvotes : {id : string; userId : number; reviewId : string }[];
+        } = await prisma.review.create({
             data: {
                 ...parsedData.data,
                 userId,
@@ -44,19 +48,25 @@ const addReview = async (req: Request , res: Response) => {
             }
         })
         res.status(200).json(review);
-    } catch (error : any) {
-        if(error.code == 'P2002'){
-            res.status(409).json({ message: "You already submitted on this website"});
+    } catch (error : unknown) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+            res.status(409).json({ message: "You already submitted on this website" });
             return;
         }
-        res.status(500).json({ message: "Internal server error" });
+
+        if (error instanceof ZodError) {
+            res.status(400).json({ message: error.errors[0]?.message || "Invalid input" });
+            return;
+        }
+        
+        res.status(500).json({ message: "Something went wrong" });
     }
 }
 
 const getReviewsOfWebsite = async(req: Request , res: Response) => {
     const websiteId = req.params.id;
     try {
-        const reviews = await prisma.review.findMany({
+        const reviews : (Review & {user : User; upvotes: ReviewUpvote[]})[] = await prisma.review.findMany({
             where: {
                 websiteId
             },
@@ -76,7 +86,7 @@ const getReviewsOfWebsite = async(req: Request , res: Response) => {
                     name : item.user.name,
                     avatar: item.user.avatar
                 },
-                upvotes: item.upvotes.map(x => ({
+                upvotes: item.upvotes.map(x  => ({
                         id: x.id,
                         userId: x.userId,
                         reviewId: x.reviewId
@@ -84,8 +94,12 @@ const getReviewsOfWebsite = async(req: Request , res: Response) => {
                 ))
             }))
         );
-    } catch (error) {
-        res.status(500).json({message : "Something went wrong"});
+    } catch (error : unknown) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            res.status(409).json({ message: "Website not found" });
+            return;
+        }        
+        res.status(500).json({ message: "Something went wrong" });
     }
 }
 
@@ -106,8 +120,15 @@ const getSignedUrlOfReview = async(req: Request , res: Response) => {
         });
         const signedUrl = await getSignedUrl(s3Client, putObjectCommand);
         res.status(200).json(signedUrl);
-    } catch (error) {
-        console.error('Error occured while getting signed url', error);
+    } catch (error : unknown) {
+        if(error instanceof Error) {
+            res.status(500).json({ message: error.message });
+            return;
+        }
+        if(error instanceof ZodError) {
+            res.status(400).json({ message: error.errors[0]?.message || "Invalid input" });
+            return;
+        }
         res.status(500).json({ message: 'Something went wrong' });
     }
 }
