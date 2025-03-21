@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  critique-postgres:
+    image: postgres:latest
+
+    ports:
+      - 5432:5432
+
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    volumes:
+      - critique-postgres-data:/var/lib/postgresql/data
+
+  critique-redis:
+    image: redis:latest
+
+    ports:
+      - 6379:6379
+
+volumes:
+  critique-postgres-data:
+
+
