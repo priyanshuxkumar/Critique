@@ -3,7 +3,7 @@ import jwt, { JsonWebTokenError } from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { SigninSchema, SignupSchema } from  '../types';
 import { Prisma, prisma, User } from 'db';
-import { cookieOptions, JWT_REFRESH_SECRET, JWT_SECRET } from '../config';
+import { config, cookieOptions } from '../config';
 import { redisClient }  from "redisclient";
 import { ZodError } from 'zod';
 
@@ -86,8 +86,8 @@ const loginUser = async(req: Request , res: Response) => {
             return;
         }
 
-        const a_token = jwt.sign({id: user.id}, JWT_SECRET, {expiresIn: '24h'})
-        const r_Token = jwt.sign({id: user.id}, JWT_REFRESH_SECRET, {expiresIn: '7d'});
+        const a_token = jwt.sign({id: user.id}, config.jwtSecret, {expiresIn: '24h'})
+        const r_Token = jwt.sign({id: user.id}, config.jwtRefreshSecret, {expiresIn: '7d'});
 
         await prisma.user.update({
             where: {
@@ -215,7 +215,7 @@ const refreshToken = async(req: Request , res: Response) => {
             return;
         }
 
-        const decoded = jwt.verify(rToken, JWT_REFRESH_SECRET) as { id: number };
+        const decoded = jwt.verify(rToken, config.jwtRefreshSecret) as { id: number };
 
         const user : Pick<User, "id" | "refreshToken"> | null = await prisma.user.findFirst({
             where: {
@@ -232,7 +232,7 @@ const refreshToken = async(req: Request , res: Response) => {
             return;
         }
 
-        const newAccessToken = jwt.sign({id: user.id}, JWT_SECRET, {expiresIn: '24h'})
+        const newAccessToken = jwt.sign({id: user.id}, config.jwtSecret, {expiresIn: '24h'})
         res.cookie('_token_', newAccessToken, cookieOptions);
 
         res.status(200).json({message: 'Token refreshed successfully'});

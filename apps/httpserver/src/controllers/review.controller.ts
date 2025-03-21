@@ -4,7 +4,7 @@ import { Prisma, prisma, Review, ReviewUpvote, User } from 'db';
 
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { s3Client } from '../config';
+import { config, s3Client } from '../config';
 import { ZodError } from 'zod';
 
 const addReview = async (req: Request , res: Response) => {
@@ -115,7 +115,7 @@ const getSignedUrlOfReview = async(req: Request , res: Response) => {
         const fileName = parsedData.data.videoName;
         
         const putObjectCommand = new PutObjectCommand({
-            Bucket: process.env.S3_BUCKET_NAME || "",
+            Bucket: config.s3BucketName,
             Key: `upload/review/video/${userId}/-${Date.now()}-${fileName}`
         });
         const signedUrl = await getSignedUrl(s3Client, putObjectCommand);

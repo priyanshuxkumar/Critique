@@ -1,21 +1,27 @@
 import { S3Client } from "@aws-sdk/client-s3";
 import "dotenv/config";
 
-/** JWT Config */
-const JWT_SECRET = process.env.JWT_SECRET || "";
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "";
+
+const config = {
+  port: process.env.PORT || 3000,
+  nodeEnv: process.env.NODE_ENV || "development",
+  frontendUrl: process.env.FRONTEND_URL,
+  jwtSecret: process.env.JWT_SECRET || "",
+  jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || "",
+  s3AccessKey: process.env.S3_ACCESS_KEY || "",
+  s3SecretKey: process.env.S3_SECRET_KEY || "",
+  s3Region: process.env.S3_REGION,
+  s3BucketName: process.env.S3_BUCKET_NAME || ""
+}
 
 // Aws S3 Config
 const s3Client = new S3Client({
-  region: "ap-south-1",
+  region: config.s3Region,
   credentials: {
-    accessKeyId: process.env.S3_ACCESS_KEY || "",
-    secretAccessKey: process.env.S3_SECRET_KEY || "",
+    accessKeyId: config.s3AccessKey,
+    secretAccessKey: config.s3SecretKey
   },
 });
-
-/** Frontend Url */
-const FRONTEND_URL = process.env.NODE_ENV == "development" && process.env.FRONTEND_URL;
 
 const cookieOptions = {
   httpOnly : true,
@@ -25,4 +31,4 @@ const cookieOptions = {
   path: '/'
 }
 
-export { JWT_SECRET, JWT_REFRESH_SECRET, s3Client, FRONTEND_URL, cookieOptions };
+export { s3Client, cookieOptions, config };

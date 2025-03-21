@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken'
-import { JWT_SECRET } from '../config';
+import { config } from '../config';
 
 export const authMiddleware = (req: Request , res: Response , next: NextFunction) => {
     try {
@@ -10,7 +10,7 @@ export const authMiddleware = (req: Request , res: Response , next: NextFunction
             return;
         }
 
-        const payload = jwt.verify(token, JWT_SECRET);
+        const payload = jwt.verify(token, config.jwtSecret);
         if(typeof payload !== 'string' && payload.id){
             req.id = payload.id;
             next();

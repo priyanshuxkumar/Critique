@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { JWT_SECRET } from '../config';
+import { config } from '../config';
 import { Prisma, prisma, User } from 'db';
 import { redisClient }  from "redisclient";
 
@@ -13,7 +13,7 @@ const verifyEmail = async(req: Request , res: Response) => {
             return;
         }
 
-        const decoded = jwt.verify(token as string, JWT_SECRET);
+        const decoded = jwt.verify(token as string, config.jwtSecret);
         if(typeof decoded === "string" || !decoded.email) {
             res.status(400).json({message : "Invalid request"})
             return;

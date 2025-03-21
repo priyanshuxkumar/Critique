@@ -3,7 +3,7 @@ import { AddWebsiteSchema, GetSignedUrlOfWebsiteIconSchema } from '../types';
 import { Prisma, prisma, Website } from 'db';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { s3Client } from '../config';
+import { config, s3Client } from '../config';
 import { checkIsWebsiteExist } from '../helper/website';
 import { ZodError } from 'zod';
 
@@ -102,7 +102,7 @@ const getSignedUrlWebsiteIcon = async (req: Request , res: Response) => {
         }
 
         const putObjectCommand = new PutObjectCommand({
-            Bucket: process.env.S3_BUCKET_NAME || "",
+            Bucket: config.s3BucketName,
             Key: `upload/website/icon/${userId}/-${Date.now()}/${parsedData.data.imageName}`
         });
 
