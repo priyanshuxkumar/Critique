@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import GithubIcon from "./icons/GithubIcon"
 import { toast } from "sonner"
+import Link from "next/link"
+import GoogleIcon from "./icons/GoogleIcon"
 
 
 export function LoginForm({
@@ -60,14 +61,14 @@ export function LoginForm({
         <div className="grid gap-3">
           <div className="flex items-center">
             <Label htmlFor="password">Password</Label>
-            <a
-              href="#"
+            <Link
+              href="/forget-password"
               className="ml-auto text-sm underline-offset-4 hover:underline"
             >
               Forgot your password?
-            </a>
+            </Link>
           </div>
-          <Input onChange={(e) => setPassword(e.target.value)} id="password" type="password" required />
+          <Input onChange={(e) => setPassword(e.target.value)} id="password" type="password" placeholder="********" required />
         </div>
         <Button onClick={ handleForm } type="submit" className="w-full" disabled={isSubmiting || Number(password?.length) < 8}>
           {isSubmiting ? 'Please wait': 'Login'}
@@ -77,16 +78,16 @@ export function LoginForm({
             Or continue with
           </span>
         </div>
-        <Button variant="outline" className="w-full">
-          <GithubIcon/>
-          Login with GitHub
+        <Button variant="outline" className="w-full" disabled>
+          <GoogleIcon/>
+          Login with Google
         </Button>
       </div>
-      <div onClick={() =>router.push('/signup')} className="text-center text-sm">
+      <div className="text-center text-sm">
         Don&apos;t have an account?{" "}
-        <a href="#" className="underline underline-offset-4">
+        <Link href="/signup" className="underline underline-offset-4">
           Sign up
-        </a>
+        </Link>
       </div>
     </form>
   )

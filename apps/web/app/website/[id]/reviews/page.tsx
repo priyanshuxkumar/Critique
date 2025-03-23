@@ -205,7 +205,7 @@ export default function Page() {
             <Loading size={40} strokeWidth={2} />
           ) : (
             <div className="flex gap-2 lg:gap-6 items-start">
-              <div className="relative h-16 w-16 overflow-hidden rounded-lg bg-background">
+              <div className="relative h-16 w-16 overflow-hidden rounded-lg bg-muted">
                 {website?.iconUrl && 
                   <Image
                     src={website?.iconUrl}
