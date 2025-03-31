@@ -9,9 +9,7 @@ import { upvoteRouter } from './routes/upvote.route';
 import { emailRouter } from './routes/email.route';
 import { config } from './config';
 
-
-const PORT = config.port;
-const app = express();
+export const app = express();
 
 const corsOptions = {
     origin: config.frontendUrl,
@@ -29,7 +27,3 @@ app.use('/api/v1/website', websiteRouter);
 app.use('/api/v1/review', reviewRouter);
 app.use('/api/v1/upvote', upvoteRouter);
 app.use(emailRouter);
-
-app.listen(PORT , () => {
-    console.log(`Server is running on http://localhost:${PORT}`)
-})
