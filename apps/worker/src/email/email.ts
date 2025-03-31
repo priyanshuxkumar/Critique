@@ -12,12 +12,15 @@ async function sendVerificationEmail(email: string) : Promise<{status: boolean, 
     throw new Error("Email is required");
   }
   try {
-    await resend.emails.send({
+    const { data, error }  = await resend.emails.send({
       from: EMAIL_FROM as string,
       to: [email],
       subject: "Verify your email of Critique",
       html: getVerificationEmailTemplate(VERIFY_EMAIL_URL)
     });
+    if (error) {
+      throw error;
+    }
     return { status: true, message: "Verification email sent successfully." };
   } catch (error) {
     throw new Error("Failed to send email.");
