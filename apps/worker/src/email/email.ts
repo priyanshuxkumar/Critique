@@ -21,7 +21,7 @@ async function sendVerificationEmail(email: string) : Promise<{status: boolean, 
     if (error) {
       throw error;
     }
-    return { status: true, message: "Verification email sent successfully." };
+    return { status: true, message: `Verification email sent successfully ${data}`,  };
   } catch (error) {
     throw new Error("Failed to send email.");
   }
