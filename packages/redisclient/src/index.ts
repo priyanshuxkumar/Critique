@@ -1,13 +1,19 @@
 import { createClient } from "redis";
 
-export const redisClient = createClient();
+const redisClient = createClient();
 
 (async function connectRedis() {
-    try {
-        await redisClient.connect();
-        console.log('Redis connected successfully!');
-    } catch (error) {
-        console.log('Error occured while connecting redis',error);
-        setTimeout(connectRedis, 5000);
-    }
+  redisClient.on("error", (err) => {
+    console.error("Redis client error", err);
+  });
+
+  redisClient.on("ready", () => {
+    console.log("Redis client connected");
+  });
+
+  await redisClient.connect();
+
+  await redisClient.ping();
 })();
+
+export { redisClient };
