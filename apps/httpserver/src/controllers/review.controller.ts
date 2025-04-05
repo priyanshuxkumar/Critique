@@ -11,7 +11,7 @@ const addReview = async (req: Request , res: Response) => {
     const userId = req.id as number;
     const websiteId = req.params.id;
     try {
-        const body = req.body;
+        const { body } = req.body;
         const parsedData = CreateReviewSchema.safeParse(body);
         if(!parsedData.success){
             res.status(400).json({message: parsedData.error.issues[0].message ?? "Invalid Input"})
@@ -75,6 +75,9 @@ const getReviewsOfWebsite = async(req: Request , res: Response) => {
                 upvotes: true
 
             },
+            orderBy: {
+                createdAt : "desc"
+            }
         });
         res.status(200).json(
             reviews.map(item => ({

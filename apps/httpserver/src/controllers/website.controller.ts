@@ -19,6 +19,17 @@ const addWebsite = async (req: Request , res: Response) => {
         let isWebsiteExist;
         try {
             isWebsiteExist = await checkIsWebsiteExist(parsedData.data.websiteUrl);
+            const website = await prisma.website.findFirst({
+                where : {
+                    websiteUrl : parsedData.data.websiteUrl
+                }
+            })
+
+            if(website) {
+                res.status(409).json({message : "This Url website already exists"});
+                return;
+            }
+
         } catch (error : any) {
             res.status(500).json({ message: error.message ?? "Error verifying website. Please try again later." });
             return;
@@ -52,18 +63,26 @@ const addWebsite = async (req: Request , res: Response) => {
     }
 }
 
-const getWebsite = async (req: Request , res: Response) => {
-    try {
-        const websites : Website[] = await prisma.website.findMany();
-        res.status(200).json(websites);
-    } catch (error : unknown) {
-        if(error instanceof Error) {
-            res.status(500).json({message : error.message});
-            return;
-        }
-        res.status(500).json({message : "Something went wrong"})
+const getWebsite = async (req: Request, res: Response) => {
+  try {
+    const websites: (Website & { _count: { reviews: number } })[] =
+      await prisma.website.findMany({
+        include: {
+          _count: {
+            select: { reviews: true },
+          },
+        },
+      });
+    websites.sort((a, b) => b._count.reviews - a._count.reviews);
+    res.status(200).json(websites);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      res.status(500).json({ message: error.message });
+      return;
     }
-}
+    res.status(500).json({ message: "Something went wrong" });
+  }
+};
 
 const getWebsiteWithId = async (req: Request , res: Response) => {
     const websiteId = req.params.id; 
