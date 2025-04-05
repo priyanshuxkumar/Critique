@@ -2,7 +2,7 @@ import { createClient } from "redis";
 
 const redisClient = createClient();
 
-(async function connectRedis() {
+async function connectRedis() {
   redisClient.on("error", (err) => {
     console.error("Redis client error", err);
   });
@@ -14,6 +14,6 @@ const redisClient = createClient();
   await redisClient.connect();
 
   await redisClient.ping();
-})();
+};
 
 export { redisClient };
