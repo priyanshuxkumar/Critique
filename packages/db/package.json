@@ -1,13 +1,11 @@
 {
-  "name": "db",
+  "name": "@repo/db",
   "version": "1.0.0",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts", 
+  "main": "index.ts",
+  "types": "index.d.ts",
   "license": "MIT",
-  "scripts": {
-    "build": "tsc -b",
-    "dev": "tsc -b && node dist/index.js",
-    "start": "node dist/index.js"
+  "exports": {
+    ".": "./src/index.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.4.1",
