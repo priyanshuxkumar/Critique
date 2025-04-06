@@ -2,9 +2,9 @@ import { Request, Response } from 'express';
 import jwt, { JsonWebTokenError } from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { SigninSchema, SignupSchema } from  '../types';
-import { Prisma, prisma, User } from 'db';
+import { Prisma, prisma, User } from '@repo/db';
 import { config, cookieOptions } from '../config';
-import { redisClient }  from "redisclient";
+import { redisClient }  from "@repo/redisclient";
 import { ZodError } from 'zod';
 
 const registerUser = async(req: Request , res: Response) => {
@@ -12,15 +12,15 @@ const registerUser = async(req: Request , res: Response) => {
         const body = req.body;
         const parsedData = SignupSchema.safeParse(body)
         if(!parsedData.success){
-            res.status(400).json({message: parsedData.error.issues[0].message ?? "Invalid Input"});
+            res.status(400).json({message: parsedData.error?.issues[0]?.message ?? "Invalid Input"});
             return;
         }
+
         const user : User | null = await prisma.user.findFirst({
             where: {
                 email: parsedData.data.email
             }
-        })
-
+        });
         if(user){
             res.status(409).json({message: 'User already exists with this email'})
             return;
@@ -66,7 +66,7 @@ const loginUser = async(req: Request , res: Response) => {
         const body = req.body;
         const parsedData = SigninSchema.safeParse(body)
         if(!parsedData.success){
-            res.status(400).json({message: parsedData.error.issues[0].message ?? "Invalid Input"});
+            res.status(400).json({message: parsedData.error?.issues[0]?.message ?? "Invalid Input"});
             return;
         }
         const user : User | null = await prisma.user.findFirst({

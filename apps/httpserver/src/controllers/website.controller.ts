@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { AddWebsiteSchema, GetSignedUrlOfWebsiteIconSchema } from '../types';
-import { Prisma, prisma, Website } from 'db';
+import { Prisma, prisma, Website } from '@repo/db';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { config, s3Client } from '../config';
@@ -12,7 +12,7 @@ const addWebsite = async (req: Request , res: Response) => {
         const body = req.body;
         const parsedData = AddWebsiteSchema.safeParse(body);
         if(!parsedData.success){
-            res.status(400).json({message: parsedData.error.issues[0].message ?? "Invalid Input"})
+            res.status(400).json({message: parsedData.error?.issues[0]?.message ?? "Invalid Input"})
             return;
         }
 
@@ -108,7 +108,7 @@ const getSignedUrlWebsiteIcon = async (req: Request , res: Response) => {
         const body = req.body;
         const parsedData = GetSignedUrlOfWebsiteIconSchema.safeParse(body);
         if(!parsedData.success){
-            res.status(400).json({message: parsedData.error.issues[0].message ?? "Invalid Input"});
+            res.status(400).json({message: parsedData.error?.issues[0]?.message ?? "Invalid Input"});
             return;
         }
 

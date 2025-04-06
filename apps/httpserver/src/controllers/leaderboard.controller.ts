@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { prisma } from "db";
+import { prisma } from "@repo/db";
 import { calculateLeaderboard } from "../helper/leaderboard";
 
 const getLeaderboard = async (req: Request, res: Response) => {

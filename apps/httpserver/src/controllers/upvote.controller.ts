@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Prisma, prisma } from 'db';
+import { Prisma, prisma } from '@repo/db';
 
 const upvoteReview = async (req: Request, res: Response) => {
     const userId = req.id as number;
@@ -7,8 +7,8 @@ const upvoteReview = async (req: Request, res: Response) => {
     try {
         await prisma.reviewUpvote.create({
             data: {
-                reviewId,
-                userId,
+                reviewId : reviewId as string,
+                userId : userId as number,
             }
         })
         res.status(200).json({message: "Review upvote successfully!"})

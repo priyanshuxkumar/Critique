@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import { CreateReviewSchema, GetSignedUrlOfReviewSchema } from '../types';
-import { Prisma, prisma, Review, ReviewUpvote, User } from 'db';
-
+import { Prisma, prisma, Review, ReviewUpvote, User } from '@repo/db';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { config, s3Client } from '../config';
@@ -14,39 +13,39 @@ const addReview = async (req: Request , res: Response) => {
         const { body } = req.body;
         const parsedData = CreateReviewSchema.safeParse(body);
         if(!parsedData.success){
-            res.status(400).json({message: parsedData.error.issues[0].message ?? "Invalid Input"})
+            res.status(400).json({message: parsedData.error?.issues[0]?.message ?? "Invalid Input"})
             return;
         }
 
         const review : Pick<Review, "id" | "content" | "rating" | "createdAt"> & {
-            user : {name : string; avatar: string | null};
-            upvotes : {id : string; userId : number; reviewId : string }[];
-        } = await prisma.review.create({
-            data: {
-                ...parsedData.data,
-                userId,
-                websiteId
+            user: { name: string; avatar: string | null };
+            upvotes: { id: string; userId: number; reviewId: string }[];
+        }  = await prisma.review.create({
+          data: {
+            ...parsedData.data,
+            userId : userId as number,
+            websiteId : websiteId as string,
+          },
+          select: {
+            id: true,
+            content: true,
+            rating: true,
+            createdAt: true,
+            user: {
+              select: {
+                name: true,
+                avatar: true,
+              },
             },
-            select: {
+            upvotes: {
+              select: {
                 id: true,
-                content: true,
-                rating: true,
-                createdAt: true,
-                user: {
-                    select: {
-                        name: true,
-                        avatar: true
-                    }
-                },
-                upvotes: {
-                    select: {
-                        id: true,
-                        userId: true,
-                        reviewId: true
-                    }
-                }
-            }
-        })
+                userId: true,
+                reviewId: true,
+              },
+            },
+          },
+        });
         res.status(200).json(review);
     } catch (error : unknown) {
         if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
@@ -112,7 +111,7 @@ const getSignedUrlOfReview = async(req: Request , res: Response) => {
         const body = req.body;
         const parsedData = GetSignedUrlOfReviewSchema.safeParse(body);
         if(!parsedData.success){
-            res.status(400).json({message: parsedData.error.issues[0].message ?? "Invalid Input"});
+            res.status(400).json({message: parsedData.error?.issues[0]?.message ?? "Invalid Input"});
             return;
         }
         const fileName = parsedData.data.videoName;

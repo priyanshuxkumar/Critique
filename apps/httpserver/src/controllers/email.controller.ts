@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '../config';
-import { Prisma, prisma, User } from 'db';
-import { redisClient }  from "redisclient";
+import { Prisma, prisma, User } from '@repo/db';
+import { redisClient }  from '@repo/redisclient';
 
 const verifyEmail = async(req: Request , res: Response) => {
     try {
