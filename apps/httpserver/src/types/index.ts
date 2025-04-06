@@ -4,7 +4,7 @@ export const EmailSchema = z.string().email('Invalid Email format');
 export const PasswordSchema = z.string().min(8, { message: 'Enter minimum 8 characters password' });
 
 export const SignupSchema = z.object({
-    name: z.string().trim().nonempty(),
+    name: z.string().trim().nonempty('Name is required'),
     email : EmailSchema,
     password: PasswordSchema,
 })
@@ -15,14 +15,14 @@ export const SigninSchema = z.object({
 })
 
 export const AddWebsiteSchema = z.object({
-    name: z.string().trim().nonempty(),
+    name: z.string().trim().nonempty('Name is required'),
     websiteUrl: z.string().url('Enter valid website url'),
     iconUrl: z.string().optional(),
     description: z.string().min(20 , {message: 'Enter minimum 20 characters description'}),
 })
 
 export const CreateReviewSchema = z.object({
-    content : z.string().trim().nonempty(),
+    content : z.string().trim().nonempty('Content is required'),
     rating: z.number(),
     videoUrl: z.string().url().optional(),
 })
