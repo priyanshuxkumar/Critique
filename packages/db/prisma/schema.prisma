@@ -14,12 +14,12 @@ datasource db {
 }
 
 model User {
-  id            Int            @id @default(autoincrement())
+  id            Int     @id @default(autoincrement())
   name          String
   avatar        String?
-  email         String         @unique
+  email         String  @unique
   password      String
-  emailVerified Boolean        @default(false)
+  emailVerified Boolean @default(false)
   refreshToken  String?
 
   createdAt     DateTime       @default(now())
@@ -28,12 +28,14 @@ model User {
 }
 
 model Website {
-  id          String   @id @default(uuid())
+  id          String          @id @default(uuid())
   name        String
   websiteUrl  String
   iconUrl     String?
   description String
-  createdAt   DateTime @default(now())
+  isVerified  Boolean         @default(false)
+  category    WebsiteCategory
+  createdAt   DateTime        @default(now())
 
   reviews Review[]
 }
@@ -62,5 +64,22 @@ model ReviewUpvote {
   reviewId String
   review   Review @relation(fields: [reviewId], references: [id])
 
+  createdAt DateTime       @default(now())
+
   @@unique([userId, reviewId])
+}
+
+enum WebsiteCategory {
+  PRODUCTIVITY
+  DEV_TOOL
+  DESIGN
+  MARKETING
+  EDUCATION
+  FINANCE
+  HEALTH
+  AI
+  ECOMMERCE
+  SOCIAL
+  ENTERTAINMENT
+  OTHER
 }
